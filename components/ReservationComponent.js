@@ -12,23 +12,14 @@ class Reservation extends Component {
         this.state = {
             guests: 1,
             smoking: false,
-            date: ''
+            date: '',
+            showModal: false
         }
     }
 
     static navigationOptions = {
         title: 'Reserve Table',
     };
-
-    handleReservation() {
-        console.log(JSON.stringify(this.state));
-        this.setState({
-            guests: 1,
-            smoking: false,
-            date: '',
-            showModal: false
-        });
-    }
 
     toggleModal() {
         this.setState({showModal: !this.state.showModal});
@@ -43,8 +34,7 @@ class Reservation extends Component {
         this.setState({
             guests: 1,
             smoking: false,
-            date: '',
-            showModal: false
+            date: ''
         });
     }
 
