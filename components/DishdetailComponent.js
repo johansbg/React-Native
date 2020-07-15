@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { View, Text, ScrollView, FlatList, StyleSheet, Button, Modal } from 'react-native';
+import { Text, View, ScrollView, FlatList, Modal, StyleSheet, Button, Alert, PanResponder } from 'react-native';
 import { Card, Icon  } from 'react-native-elements';
 import { DISHES } from '../shared/dishes';
 import { COMMENTS } from '../shared/comments';
@@ -8,6 +8,7 @@ import { baseUrl } from '../shared/baseUrl';
 import { postFavorite, postComment } from '../redux/ActionCreators';
 import { Rating, AirbnbRating } from 'react-native-elements';
 import { Input } from 'react-native-elements';
+import * as Animatable from 'react-native-animatable';
 
 const mapStateToProps = state => {
     return {
@@ -25,9 +26,46 @@ const mapDispatchToProps = dispatch => ({
 function RenderDish(props) {
     const dish = props.dish;
     
-    if (dish != null){
-        
+    handleViewRef = ref => this.view = ref;
+
+    const recognizeDrag = ({ moveX, moveY, dx, dy }) => {
+        if ( dx < -200 )
+            return true;
+        else
+            return false;
+    }
+
+    const panResponder = PanResponder.create({
+        onStartShouldSetPanResponder: (e, gestureState) => {
+            return true;
+        },
+        onPanResponderGrant: () => {
+            this.view.rubberBand(1000)
+            .then(endState => {props.generateComment()} );
+        },
+        onPanResponderEnd: (e, gestureState) => {
+            console.log("pan responder end", gestureState);
+            if (recognizeDrag(gestureState))
+                Alert.alert(
+                    'Add Favorite',
+                    'Are you sure you wish to add ' + dish.name + ' to favorite?',
+                    [
+                    {text: 'Cancel', onPress: () => console.log('Cancel Pressed'), style: 'cancel'},
+                    {text: 'OK', onPress: () => {props.favorite ? console.log('Already favorite') : props.onPress()}},
+                    ],
+                    { cancelable: false }
+                );
+
+            return true;
+        }
+    });
+
+    if (dish != null) {
         return(
+            <Animatable.View animation="fadeInDown" duration={2000} delay={1000}
+                ref={this.handleViewRef}
+                {...panResponder.panHandlers}
+                generateComment={props.generateComment()}>
             <Card
             featuredTitle={dish.name}
             image={{uri: baseUrl + dish.image}}>
@@ -53,6 +91,7 @@ function RenderDish(props) {
                     />
                 </Text>
             </Card>
+            </Animatable.View>
         );
 
     }
@@ -85,13 +124,15 @@ function RenderComments(props) {
     };
     
     return (
+        <Animatable.View animation="fadeInUp" duration={2000} delay={1000}>        
         <Card title='Comments' >
-        <FlatList 
-            data={comments}
-            renderItem={renderCommentItem}
-            keyExtractor={item => item.id.toString()}
-            />
+            <FlatList 
+                data={comments}
+                renderItem={renderCommentItem}
+                keyExtractor={item => item.id.toString()}
+                />
         </Card>
+        </Animatable.View>
     );
 }
 
@@ -124,6 +165,10 @@ class DishDetail extends Component {
         this.setState({showModal: !this.state.showModal});
     }
 
+    generateComment(){
+        console.log(JSON.stringify(this.state.showModal));
+        this.setState({showModal: !this.state.showModal});
+    }
     handleComment() {
         console.log(JSON.stringify(this.state.Author));
         console.log(JSON.stringify(this.state.Comment));
@@ -151,6 +196,7 @@ class DishDetail extends Component {
                     favorite={this.props.favorites.some(el => el === dishId)}
                     onPress={() => this.markFavorite(dishId)}
                     onClick= {() => this.toggleModal()}
+                    generateComment= {() => this.generateComment()}
                     />
                 <Modal animationType = {"slide"} transparent = {false}
                     visible = {this.state.showModal}
