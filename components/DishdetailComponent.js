@@ -150,6 +150,7 @@ class DishDetail extends Component {
                 <RenderDish dish={this.props.dishes.dishes[+dishId]}
                     favorite={this.props.favorites.some(el => el === dishId)}
                     onPress={() => this.markFavorite(dishId)}
+                    onClick= {() => this.toggleModal()}
                     />
                 <Modal animationType = {"slide"} transparent = {false}
                     visible = {this.state.showModal}
